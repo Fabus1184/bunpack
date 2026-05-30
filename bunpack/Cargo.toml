@@ -1,0 +1,7 @@
+[package]
+name = "bunpack"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bunpack_proc_macros = { path = "../bunpack_proc_macros" }
