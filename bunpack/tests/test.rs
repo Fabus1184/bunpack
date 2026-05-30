@@ -80,3 +80,17 @@ fn test_big_endian() {
     let unpacked: u16 = bunpack::unpack!("<H", &bytes);
     assert_eq!(unpacked, 0x3412);
 }
+
+#[test]
+fn test_read_write() {
+    use std::io::Cursor;
+
+    let mut cursor = Cursor::new(Vec::new());
+    bunpack::pack_write!(&mut cursor, "<i?", 42, true).unwrap();
+
+    assert_eq!(cursor.get_ref().as_slice(), &[42, 0, 0, 0, 1]);
+
+    cursor.set_position(0);
+    let value: (i32, bool) = bunpack::unpack_read!(&mut cursor, "<i?").unwrap();
+    assert_eq!(value, (42, true));
+}

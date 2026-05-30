@@ -15,6 +15,21 @@ let value: i32 = unpack!("i", &data);
 assert_eq!(value, 1234);
 ```
 
+There is also a `std::io::Read` and `std::io::Write` variant for packing and unpacking directly from streams.
+
+```rust
+use std::io::Cursor;
+
+let mut cursor = Cursor::new(Vec::new());
+bunpack::pack_write!(&mut cursor, "<i?", 42, true).unwrap();
+
+assert_eq!(cursor.get_ref().as_slice(), &[42, 0, 0, 0, 1]);
+
+cursor.set_position(0);
+let value: (i32, bool) = bunpack::unpack_read!(&mut cursor, "<i?").unwrap();
+assert_eq!(value, (42, true));
+```
+
 # Format Specifiers
 
 ## Byte Order

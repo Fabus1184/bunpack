@@ -46,9 +46,11 @@
 //! | `p` | `&[u8]`          | pack only: length of byte array |
 //! | `P` | `*const ()` | native               |
 
-pub use bunpack_proc_macros::{pack, unpack};
+pub use bunpack_proc_macros::{pack, pack_write, unpack, unpack_read};
 
-pub trait Unpack {
+pub trait Unpack: Sized {
+    const SIZE: usize;
+
     fn unpack_le(data: &mut &[u8]) -> Self;
     fn unpack_be(data: &mut &[u8]) -> Self;
 }
@@ -61,11 +63,13 @@ pub trait Pack {
 macro_rules! impl_packs {
     ($ty:ty) => {
         impl Unpack for $ty {
+            const SIZE: usize = std::mem::size_of::<$ty>();
+
             fn unpack_le(data: &mut &[u8]) -> Self {
-                const SIZE: usize = std::mem::size_of::<$ty>();
-                let bytes: [u8; SIZE] =
-                    data[..SIZE].try_into().expect("Not enough bytes to unpack");
-                *data = &data[SIZE..];
+                let bytes: [u8; Self::SIZE] = data[..Self::SIZE]
+                    .try_into()
+                    .expect("Not enough bytes to unpack");
+                *data = &data[Self::SIZE..];
                 Self::from_le_bytes(bytes)
             }
 
@@ -106,6 +110,8 @@ impl_packs!(f32);
 impl_packs!(f64);
 
 impl Unpack for bool {
+    const SIZE: usize = 1;
+
     fn unpack_le(data: &mut &[u8]) -> Self {
         let byte = u8::unpack_le(data);
         bool::try_from(byte).expect("Invalid boolean encoding")
@@ -126,6 +132,8 @@ impl Pack for bool {
 }
 
 impl Unpack for char {
+    const SIZE: usize = 4;
+
     fn unpack_le(data: &mut &[u8]) -> Self {
         char::from_u32(u32::unpack_le(data)).expect("Invalid char encoding")
     }
@@ -154,6 +162,8 @@ impl<T> Pack for *const T {
     }
 }
 impl<T> Unpack for *const T {
+    const SIZE: usize = std::mem::size_of::<usize>();
+
     fn unpack_le(data: &mut &[u8]) -> Self {
         usize::unpack_le(data) as *const T
     }
@@ -197,6 +207,8 @@ impl<T: Pack, const N: usize> Pack for [T; N] {
     }
 }
 impl<T: Unpack, const N: usize> Unpack for [T; N] {
+    const SIZE: usize = T::SIZE * N;
+
     fn unpack_le(data: &mut &[u8]) -> Self {
         std::array::from_fn(|_| T::unpack_le(data))
     }
@@ -209,6 +221,8 @@ impl<T: Unpack, const N: usize> Unpack for [T; N] {
 macro_rules! impl_packs_tuple {
     ($($name:ident),*) => {
         impl<$($name: Unpack),*> Unpack for ($($name,)*) {
+            const SIZE: usize = 0 $(+ $name::SIZE)*;
+
             fn unpack_le(data: &mut &[u8]) -> Self {
                 ($($name::unpack_le(data),)*)
             }
