@@ -1,4 +1,8 @@
-# bunpack
+[![Rust](https://github.com/Fabus1184/bunpack/actions/workflows/rust.yml/badge.svg)](https://github.com/Fabus1184/bunpack/actions/workflows/rust.yml)
+![Crates.io Version](https://img.shields.io/crates/v/bunpack)
+
+
+# bunpack 
 
 A library for packing and unpacking binary data in Rust using format strings similar to Python's `struct` module.
 
