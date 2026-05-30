@@ -1,6 +1,6 @@
 [package]
 name = "bunpack"
-version = "0.1.3"
+version = "0.1.4"
 edition = "2024"
 description = "A Rust library for (un)packing binary data into structured formats like python's struct module."
 license = "MIT"
